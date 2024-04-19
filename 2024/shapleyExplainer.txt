@@ -1,0 +1,11 @@
+# HYPER SHAP 모델 적합
+r_shap = cas.shapleyExplainer(
+    table           = cas.CASTable("lgb_model_score_out_base"),
+    query           = cas.CASTable("xai_query"), 
+    modelTable      = {"name" : "lgb_model_astore"},
+    modelTableType  = "ASTORE",
+    inputs = imp_xvars,
+    nominals = imp_cats,
+    predictedTarget = 'P_BAD1',
+    depth           = 1
+ )

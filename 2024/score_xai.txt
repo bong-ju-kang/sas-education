@@ -1,0 +1,15 @@
+# 기준 데이터 점수 산출
+cas.astore.score(
+    
+    # 스코어 대상
+    table = base, 
+    
+    # 스코어 모델
+    rstore = 'lgb_model_astore',
+    
+    # 복제할 변수 지정
+    copyVars = imp_xvars + [target],
+    
+    # 점수 결과 테이블
+    casOut = {'name': 'lgb_model_score_out_base', 'replace': True}
+)
