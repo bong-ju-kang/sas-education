@@ -1,0 +1,23 @@
+# 결과 테이블을 이용한 ROC 그래프
+
+fig, ax = plt.subplots(dpi=100)
+
+# 무작위 기준선 그리기
+ax.plot([0, 1], [0, 1], "k--")
+
+auc = r_logistic["ROCInfo"]["C"][0].round(3)
+ax.plot(r_logistic['ROCInfo']['FPR'], r_logistic['ROCInfo']['Sensitivity'], 
+       label=f'Logistic Model\n AUC: {auc}')
+
+# 레이블 주기
+ax.set_xlabel("False Positive Rate")
+ax.set_ylabel("True Positive Rate")
+
+# 제목 주기
+ax.set_title("ROC Curve")
+
+# 범례 주기
+plt.legend(loc="best")
+
+# 그림 출력
+plt.show()

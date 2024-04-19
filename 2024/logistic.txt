@@ -1,0 +1,29 @@
+#
+# 로지스틱 회귀 적합
+#
+
+r = cas.regression.logistic(
+    # 입력 데이터
+    table={'name':'df_partn_impute', 'caslib':'casuser'}, 
+    partByVar={"name":"_PartInd_",
+               "train":"1",
+               "validate":"0"},
+  
+    # 변수 역할 정의
+    classVars=imp_cats,
+
+   # 모델 정의
+    model={'depvar': [{'name': target, 'options': {'event': event}}],
+           'link':'LOGIT',
+           'effects': [{'vars': imp_xvars}]
+          },
+    
+    
+    # 변수 선택
+    selection={'method':'FORWARD', 'choose': "SBC", 'select':"SBC", 'stop':"SBC"},
+    
+    # 저장
+    store={'name':'logistic_model_astore', 'caslib':'casuser', 'replace': True}
+)
+
+r

@@ -1,0 +1,7 @@
+# 상관관계 분석: 상호정보
+train.exploreCorrelation (
+    casout={'name':'corr_out', 'replace':True},
+    target=target,
+    inputs=xvars,
+    nominals=cats
+)

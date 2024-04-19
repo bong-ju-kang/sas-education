@@ -1,0 +1,20 @@
+# 결측값 처리
+train.dataPreprocess.impute(
+    
+    # 결측값 처리 방식
+    methodInterval='mean',
+    methodNominal = 'mode',
+    
+    # 처리 변수
+    inputs = xvars,
+    
+    # 결과 테이블
+    casout={'name':'train_impute_out', 'replace':True}, 
+
+    # 복사 변수
+    copyVars = target,
+    
+    # 모델 저장
+    code = {'casout':{'name':'impute_code', 'replace':True}} 
+    
+)

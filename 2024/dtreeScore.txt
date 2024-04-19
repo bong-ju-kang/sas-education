@@ -1,0 +1,20 @@
+# 검증 데이터 점수 산출
+
+r = cas.decisionTree.dtreeScore(
+    # 점수 산출 대상 테이블 지정
+    table={'name':'df_partn_impute', 'caslib':'casuser', 'where':'_PartInd_=0'},
+
+    # 모델 테이블 지정
+    modelTable={"name": "dtree_model_out"},
+
+    # 모든 범주에 대한 확률값 출력 여부
+    assessonerow=True,
+
+    # 점수 산출 저장 테이블 지정
+    casOut={"name": "dtree_score_out", "replace": True},
+
+    # 복제 변수 지정
+    copyVars={target, "_PartInd_"}
+)
+
+r['ScoreInfo']

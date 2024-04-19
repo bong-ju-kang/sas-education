@@ -1,0 +1,14 @@
+# 점수 내기: ASTRE 모델 이용
+cas.astore.score(
+    # 점수 산출 대상 파일 지정
+    table={'name':'df_partn_impute', 'caslib':'casuser', 'where':'_PartInd_=0'},
+
+    # ATORE 모델 지정
+    rstore='logistic_model_astore',
+
+    # 복제할 변수 지정
+    copyvars=[target],
+
+    # 점수 산출 저장 테이블 지정
+    casout={'name': 'logistic_score_out', 'replace': True}
+)

@@ -1,0 +1,7 @@
+# 점수 산출
+cas.astore.score(
+    table = cas.CASTable('df_partn_impute').query("_PartInd_= 0"),
+    rstore = 'lgb_model_astore',
+    copyvars = imp_xvars + [target],
+    casout ={'name':'lgb_model_score_out', 'replace':True}
+)

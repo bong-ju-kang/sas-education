@@ -1,0 +1,16 @@
+# 데이터 분할
+cas.sampling.stratified(
+    
+    # 데이터 대상
+    table = {'name':df, 'groupby':target},
+    
+    # 비율 지정
+    samppct = 70, 
+    
+    # 분할 변수 출력 여부 결정
+    partInd = True,
+    
+    # 출력 테이블 지정
+    output = {'casout':{'name':'df_partn', 'replace':True}, 'copyVars':"ALL"}
+
+)
