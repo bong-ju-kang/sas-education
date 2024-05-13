@@ -9,7 +9,8 @@ r_dt = cas.percentile.assess(
 
     # 예측 변수 지정
     # inputs=[{"name": "_DT_P_           1" + event}],
-    inputs=[{"name": "_DT_P_           1"}],
+    # inputs=[{"name": "_DT_P_           1"}],
+    inputs=[{"name": "_DT_PredMean_"}],
 
     # 이벤트 값 지정
     event=event,
