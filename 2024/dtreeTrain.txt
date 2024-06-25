@@ -9,7 +9,7 @@ r = cas.decisionTree.dtreeTrain(
     # 변수 역할 정의
     target=target, 
     inputs=imp_xvars, 
-    nominals=imp_cats ,
+    nominals=imp_cats+[target],
 
     # 결정나무 모델: 테이블 형식
     casOut={'name':'dtree_model_out', 'caslib':'casuser', 'replace': True},
