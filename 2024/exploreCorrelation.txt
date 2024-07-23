@@ -3,5 +3,5 @@ train.exploreCorrelation (
     casout={'name':'corr_out', 'replace':True},
     target=target,
     inputs=xvars,
-    nominals=cats
+    nominals=cats+[target]
 )
