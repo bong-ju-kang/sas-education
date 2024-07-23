@@ -4,17 +4,17 @@
 
 r = cas.regression.logistic(
     # 입력 데이터
-    table={'name':'df_partn_impute', 'caslib':'casuser'}, 
-    partByVar={"name":"_PartInd_",
-               "train":"1",
-               "validate":"0"},
-  
+    table={'name':'df_partn_impute', 'caslib':'casuser', 'where':'_PartInd_=1'}, 
+    partByFrac={'seed':1234, 'validate':0.3},
+    
     # 변수 역할 정의
-    classVars=imp_cats,
+    class_=[{'vars':imp_cats}],
+    # classVars=[{'vars':imp_cats}],
 
    # 모델 정의
-    model={'depvar': [{'name': target, 'options': {'event': event}}],
-           'link':'LOGIT',
+    model={'depVars': [{'name': target, 'options': {'event': event}}],
+           #'dist': 'BERNOULLI',
+           #'link': 'LOGIT',          
            'effects': [{'vars': imp_xvars}]
           },
     
