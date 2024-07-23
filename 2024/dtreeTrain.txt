@@ -1,7 +1,3 @@
-#
-# 결정나무 적합
-#
-
 r = cas.decisionTree.dtreeTrain(
     # 입력 데이터
     table={'name':'df_partn_impute', 'caslib':'casuser', 'where':'_PartInd_=1'},
@@ -11,8 +7,8 @@ r = cas.decisionTree.dtreeTrain(
     inputs=imp_xvars, 
     nominals=imp_cats+[target],
 
-    # 결정나무 모델: 테이블 형식
-    casOut={'name':'dtree_model_out', 'caslib':'casuser', 'replace': True},
+    # 결정나무 모델: aStore 형식
+    savestate={'name':'dtree_model_astore', 'caslib':'casuser', 'replace': True},
    
     # 분기 옵션
     crit='GINI',
@@ -25,4 +21,4 @@ r = cas.decisionTree.dtreeTrain(
     varimp=True
 )
 
-r['ModelInfo']
+r
