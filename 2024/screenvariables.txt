@@ -1,0 +1,5 @@
+# 변수 1차 스크리닝
+df.screenVariables(
+    casout={'name':'screen_out', 'replace':True}, 
+    target = 'BAD'
+)
