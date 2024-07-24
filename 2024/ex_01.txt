@@ -13,7 +13,7 @@ edf.head()
 edf.info()
 
 # 5)
-nums = df.select_dtypes('double').columns
+nums = edf.select_dtypes('double').columns
 nums
 
 # 6)
