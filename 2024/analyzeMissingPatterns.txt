@@ -1,0 +1,5 @@
+# 결측값 영향도
+df.analyzeMissingPatterns(
+    casout={'replace':True, 'name':'missing_out'}, 
+    target = 'BAD'
+)
