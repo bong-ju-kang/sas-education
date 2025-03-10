@@ -1,0 +1,272 @@
+# 기본 패키지
+import os
+import sys
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+import swat
+
+print(sys.version)
+print(swat.__version__)
+
+# 폭 조정
+pd.set_option('display.width', 256)
+pd.set_option('display.max_columns', None)
+
+# 접속정보 정의
+user = "student"
+password = "Metadata0"
+server = "server.demo.sas.com"
+port = 30570
+
+# 카스 인스턴스 생성
+cas = swat.CAS(server, port, user, password)
+
+# 데이터 읽기: hmeq
+url = "https://github.com/bong-ju-kang/data/raw/master/hmeq.csv"
+# 데이터 이름 명시
+df = cas.read_csv(url, casout={'name': 'hmeq', 'replace':True})
+
+# 액션셋 메모리 로드
+cas.loadactionset('datasciencepilot')
+cas.loadactionset('datapreprocess')
+cas.loadactionset("percentile")
+cas.loadactionset('sampling')
+cas.loadactionset('datastep')
+cas.loadactionset('regression')
+cas.loadactionset('astore')
+cas.loadactionset('decisionTree')
+cas.loadactionset('autotune')
+cas.loadActionset('lightgradboost')
+cas.loadactionset(actionset="explainModel")
+
+# 일반적인 방법: 목표변수와 이벤트, 설명변수 정의
+target = 'BAD'
+event = '1'
+xvars = [x for x in df.columns.tolist() if x not in ['BAD']]
+print(xvars)
+
+# 범주 변수 정의
+cats = [x for x in df.select_dtypes('varchar').columns.tolist() if x in xvars]
+print(cats)
+
+# 연속변수 정의
+nums = list(set(xvars)-set(cats))
+print(nums)
+
+# 데이터 분할
+cas.sampling.stratified(
+    
+    # 데이터 대상
+    table = {'name':df, 'groupby':target},
+    
+    # 비율 지정
+    samppct = 70, 
+	
+# 시드값 지정
+	seed = 42,
+    
+    # 분할 변수 출력 여부 결정
+    partInd = True,
+    
+    # 출력 테이블 지정
+    output = {'casout':{'name':'df_partn', 'replace':True}, 'copyVars':"ALL"}
+)
+
+# 결과 확인
+print(cas.CASTable('df_partn')['_PartInd_'].value_counts(normalize=True))
+
+# 훈련 데이터 지정
+train = cas.CASTable('df_partn').query('_PartInd_=1')
+
+# 확인
+print(train.shape)
+
+# 결측값 처리
+train.dataPreprocess.impute(
+    
+    # 결측값 처리 방식
+    methodInterval='mean',
+    methodNominal = 'mode',
+    
+    # 처리 변수
+    inputs = xvars,
+    
+    # 결과 테이블
+    casout={'name':'train_impute_out', 'replace':True}, 
+
+    # 복사 변수
+    copyVars = target,
+    
+    # 모델 저장
+    code = {'casout':{'name':'impute_code', 'replace':True}} 
+    
+)
+
+# 결과 확인
+print(cas.CASTable('train_impute_out').head())
+
+# 모델 저장
+cas.table.save(
+    # 대상
+    table='impute_code',
+
+    # 저장명...
+    name='impute_code', caslib='casuser', replace=True
+)
+
+# 모델 호출: source to memory
+cas.table.loadtable(
+    # 대상 정의
+    path = 'impute_code.sashdat', caslib='casuser',
+    # 목적지 정의
+    casout={'name': 'impute_code', 'replace':True}
+)
+
+# 결측값 처리: 모든 데이터
+cas.dataStep.runCodeTable(
+    # 대상
+    table = 'df_partn',
+    #  출력
+    casout={'name':'df_partn_impute'},
+    # 변수
+    dropvars = xvars,
+    # 모델 테이블
+    codeTable = 'impute_code'
+)
+
+# 변수 재 정의
+imp_xvars = ['IMP_'+x for x in xvars]
+imp_cats = ['IMP_'+x for x in cats]
+print(imp_xvars)
+print(imp_cats)
+
+
+# Light GBM 적합
+r = cas.lightGradBoost.lgbmTrain(
+    table = cas.CASTable('df_partn_impute').query("_PartInd_= 1"),
+
+    inputs = imp_xvars,
+    nominals = imp_cats + [target], 
+    target = target,
+    
+   # gradient-based one-side sampling
+    boosting ='GOSS',
+	
+    objective = 'BINARY',
+    maxIters = 300,
+
+    validTable = cas.CASTable('df_partn_impute').query("_PartInd_= 0"),
+    
+    saveState = {'name':'lgb_model_astore', 'replace':True}
+)
+
+# 평가를 위한 데이터셋
+test_df = cas.CASTable('df_partn_impute').query("_PartInd_= 0").to_frame()
+print(test_df.shape)
+print(test_df.columns)
+test_df.to_csv('/home/student/hmeq_test.csv', index=False)
+
+# 모델 저장
+cas.table.save(
+    # 대상
+    table = 'lgb_model_astore',
+    # 저장
+    name='lgb_model_astore', caslib='casuser', replace=True
+)
+# 모델 호출
+cas.table.loadtable(
+    # 대상
+    path = 'lgb_model_astore.sashdat', caslib='casuser',
+    # 목적지 정의
+    casout = {'name':'lgb_model_astore', 'caslib':'casuser', 'replace':True}
+)
+
+import sasctl
+from sasctl import Session
+from sasctl.tasks import register_model
+from sasctl import publish_model
+from sasctl.services import microanalytic_score as mas
+from sasctl.services import model_repository as mr
+from sasctl.services import model_publish as mp
+from sasctl.services import model_management as mm
+
+print(sasctl.__version__)
+
+# 모델 저장소 확인
+with Session("server.demo.sas.com", "student","Metadata0",verify_ssl=False):
+    repo_list = mr.list_repositories()
+print([x["name"] for x in repo_list])
+
+# 프로젝트 생성: 기존에 있는 경우는 오류 발생
+with Session("server.demo.sas.com", "student","Metadata0",verify_ssl=False):
+    mr.create_project("test_project", "DMRepository")
+    
+# 모델 제거해보기
+with Session("server.demo.sas.com", "student","Metadata0",verify_ssl=False):
+    mr.delete_model("LightGB Model")    
+
+# 모델 등록
+with Session("server.demo.sas.com", "student","Metadata0",verify_ssl=False):
+    model = register_model(
+        model = cas.CASTable('lgb_model_astore'),
+        name = 'LightGB Model',
+        project = 'test_proejct',
+        repository = 'DMRepository',
+        # 프로젝트와 레퍼지토리가 없는 경우에 강제 생성
+        # 레퍼지토리를 명시하지 않으면 디폴트(Public) 레퍼지토리로 설정됨
+        force = True
+    )
+
+# 모델 게시 목적지 확인
+with Session("server.demo.sas.com", "student","Metadata0",verify_ssl=False):
+    dstn_list = model_publish.list_destinations()
+print([x["name"] for x in dstn_list])
+ 
+# 모델 게시
+with Session("server.demo.sas.com", "student","Metadata0",verify_ssl=False):
+    model = mr.get_model('LightGB Model')
+    publish_model(model, 'maslocal')
+    
+# 모델 호출
+with Session("server.demo.sas.com", "student","Metadata0",verify_ssl=False):
+    viya_server = "server.demo.sas.com"
+    # model_id = model_dict["LightGB Model"]
+    # 모델 엔드포인트 URL 구성
+    # base_url = f"https://{viya_server}/modelPublish/models"
+    # endpoint_url = f"{base_url}/{model_id}/steps/score"
+    model_id = 'lightgbmodel_5110ba5647c5437e9fb'
+    endpoint_url = f"https://{viya_server}/microanalyticScore/modules/{model_id}"
+
+    # 테스트 데이터 준비 (모델 입력에 맞게 조정 필요)
+    test_data = {
+        "inputs":[{'name': 'IMP_LOAN', 'value': 7700}, {'name': 'IMP_MORTDUE', 'value': 70451.0},
+                  {'name': 'IMP_VALUE', 'value': 81862.0}, {'name': 'IMP_REASON', 'value': 'DebtCon'}, 
+                  {'name': 'IMP_JOB', 'value': 'Sales'}, {'name': 'IMP_YOJ', 'value': 3.0}, 
+                  {'name': 'IMP_DEROG', 'value': 0.0}, {'name': 'IMP_DELINQ', 'value': 0.0}, 
+                  {'name': 'IMP_CLAGE', 'value': 141.26867109}, {'name': 'IMP_NINQ', 'value': 0.0}, 
+                  {'name': 'IMP_CLNO', 'value': 31.0}, {'name': 'IMP_DEBTINC', 'value': 31.68194302}]
+        }
+        
+    # REST API 호출
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(endpoint_url, json=test_data, headers=headers, verify=False)
+
+    # 결과 출력
+    if response.status_code == 200:
+        print("Model prediction successful:")
+        print(response.json())
+    else:
+        print(f"Error in model prediction. Status code: {response.status_code}")
+        print(response.text)    
+    
+
+
+
+
+
+
+
+
