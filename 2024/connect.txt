@@ -1,8 +1,0 @@
-# 접속정보 정의
-user = "student"
-password = "Metadata0"
-server = "server.demo.sas.com"
-port = 30570
-
-# 카스 인스턴스 생성
-cas = swat.CAS(server, port, user, password)

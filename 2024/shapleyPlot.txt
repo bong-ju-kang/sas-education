@@ -1,5 +1,0 @@
-# 샤플리 plot
-fig, ax = plt.subplots(dpi=150)
-ax.barh(r_shap['ShapleyValues']['Variable'], r_shap['ShapleyValues']['ShapleyValue'])
-ax.set_title(f"Predicted value for this case: {r_shap['ShapleyValues']['ShapleyValue'].sum().round(4)}")
-plt.show()
